@@ -17,6 +17,6 @@ export class Post {
             {name: "work", referencedColumnName: "work"},
             {name: "section", referencedColumnName: "section"}
     ])
-    public sectionEntity: Section;
+    sectionEntity: Section;
 
 }

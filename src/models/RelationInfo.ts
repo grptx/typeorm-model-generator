@@ -2,9 +2,9 @@ export class RelationInfo {
     public isOwner: boolean;
     public relationType: "OneToOne" | "OneToMany" | "ManyToOne" | "ManyToMany";
     public relatedTable: string;
-    public relatedColumn: string;
+    public relatedColumns: string[] = [];
     public ownerTable: string;
-    public ownerColumn: string;
+    public ownerColumns: string[] = [];
     public actionOnDelete:
         | "RESTRICT"
         | "CASCADE"

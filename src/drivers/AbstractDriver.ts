@@ -121,11 +121,11 @@ export abstract class AbstractDriver {
 
                 const col1Rel = new RelationInfo();
                 col1Rel.relatedTable = namesOfRelatedTables[1];
-                col1Rel.relatedColumn = namesOfRelatedTables[1];
+                col1Rel.relatedColumns[0] = namesOfRelatedTables[1];
 
                 col1Rel.relationType = "ManyToMany";
                 col1Rel.isOwner = true;
-                col1Rel.ownerColumn = namesOfRelatedTables[0];
+                col1Rel.ownerColumns[0] = namesOfRelatedTables[0];
 
                 column1.relations.push(col1Rel);
                 relatedTable1.Columns.push(column1);
@@ -135,7 +135,7 @@ export abstract class AbstractDriver {
 
                 const col2Rel = new RelationInfo();
                 col2Rel.relatedTable = namesOfRelatedTables[0];
-                col2Rel.relatedColumn = namesOfRelatedTables[1];
+                col2Rel.relatedColumns[0] = namesOfRelatedTables[1];
 
                 col2Rel.relationType = "ManyToMany";
                 col2Rel.isOwner = false;
@@ -235,44 +235,42 @@ export abstract class AbstractDriver {
             const col = new ColumnInfo();
             col.tsName = columnName;
             col.relations.push(referencedRelation);
+            ownerRelation.ownerColumns[0] = columnName;
 
-            for (
-                let relationColumnIndex = 0;
-                relationColumnIndex < relationTmp.ownerColumnsNames.length;
-                relationColumnIndex++
-            ) {
-                const { ownerColumn, relatedColumn } = this.getRelatedColumns(
-                    ownerEntity,
-                    relationTmp,
-                    relationColumnIndex,
-                    referencedEntity
-                );
-                if (!ownerColumn || !relatedColumn) {
-                    return;
-                }
-
-                const index = ownerEntity.Indexes.find(
-                    ind =>
-                        ind.isUnique &&
-                        ind.columns.length === 1 &&
-                        ind.columns[0].name === ownerColumn!.tsName
-                );
-                const isOneToMany = !index;
-                ownerRelation.relationType = isOneToMany
-                    ? "ManyToOne"
-                    : "OneToOne";
-                referencedRelation.relationType = isOneToMany
-                    ? "OneToMany"
-                    : "OneToOne";
-
-                ownerRelation.ownerColumn = columnName;
-                ownerRelation.relatedColumn = relatedColumn.tsName.toLowerCase();
-                ownerColumn.relations.push(ownerRelation);
-
-                referencedRelation.ownerColumn = relatedColumn.tsName;
-                referencedRelation.relatedColumn = ownerColumn.tsName;
-                referencedEntity.Columns.push(col);
+            const { ownerColumns, relatedColumns } = this.getRelatedColumns(
+                ownerEntity,
+                relationTmp,
+                referencedEntity
+            );
+            if (!ownerColumns || !relatedColumns) {
+                return;
             }
+
+            const index = ownerEntity.Indexes.find(
+                ind =>
+                    ind.isUnique &&
+                    ind.columns.length === ownerColumns.length &&
+                    ind.columns.every(
+                        (column, idx) =>
+                            column.name === ownerColumns[idx].tsName
+                    )
+            );
+            const isOneToMany = !index;
+            ownerRelation.relationType = isOneToMany ? "ManyToOne" : "OneToOne";
+            referencedRelation.relationType = isOneToMany
+                ? "OneToMany"
+                : "OneToOne";
+
+            ownerRelation.relatedColumns = relatedColumns.map(c =>
+                c.tsName.toLowerCase()
+            );
+            ownerRelation.relatedColumns.map((rc, idx) =>
+                ownerColumns[idx].relations.push(ownerRelation)
+            );
+
+            referencedRelation.ownerColumns = relatedColumns.map(c => c.tsName);
+            referencedRelation.relatedColumns = ownerColumns.map(c => c.tsName);
+            referencedEntity.Columns.push(col);
         });
         return entities;
     }
@@ -330,38 +328,49 @@ export abstract class AbstractDriver {
     private getRelatedColumns(
         ownerEntity: EntityInfo,
         relationTmp: IRelationTempInfo,
-        relationColumnIndex: number,
         referencedEntity: EntityInfo
     ) {
-        const ownerColumn = ownerEntity.Columns.find(
-            column =>
-                column.tsName ===
-                relationTmp.ownerColumnsNames[relationColumnIndex]
-        );
-        const relatedColumn = referencedEntity.Columns.find(
-            column =>
-                column.tsName ===
-                relationTmp.referencedColumnsNames[relationColumnIndex]
-        );
-        if (!ownerColumn) {
-            TomgUtils.LogError(
-                `Relation between tables ${relationTmp.ownerTable} and ${
-                    relationTmp.referencedTable
-                } didn't found entity column ${
-                    relationTmp.ownerTable
-                }.${ownerColumn}.`
+        const ownerColumns: ColumnInfo[] = [];
+        const relatedColumns: ColumnInfo[] = [];
+        for (
+            let relationColumnIndex = 0;
+            relationColumnIndex < relationTmp.ownerColumnsNames.length;
+            relationColumnIndex++
+        ) {
+            const ownerColumn = ownerEntity.Columns.find(
+                column =>
+                    column.tsName ===
+                    relationTmp.ownerColumnsNames[relationColumnIndex]
             );
-        }
-        if (!relatedColumn) {
-            TomgUtils.LogError(
-                `Relation between tables ${relationTmp.ownerTable} and ${
-                    relationTmp.referencedTable
-                } didn't found entity column ${
-                    relationTmp.referencedTable
-                }.${relatedColumn}.`
+            const relatedColumn = referencedEntity.Columns.find(
+                column =>
+                    column.tsName ===
+                    relationTmp.referencedColumnsNames[relationColumnIndex]
             );
+            if (ownerColumn) {
+                ownerColumns.push(ownerColumn);
+            } else {
+                TomgUtils.LogError(
+                    `Relation between tables ${relationTmp.ownerTable} and ${
+                        relationTmp.referencedTable
+                    } didn't found entity column ${
+                        relationTmp.ownerTable
+                    }.${ownerColumn}.`
+                );
+            }
+            if (relatedColumn) {
+                relatedColumns.push(relatedColumn);
+            } else {
+                TomgUtils.LogError(
+                    `Relation between tables ${relationTmp.ownerTable} and ${
+                        relationTmp.referencedTable
+                    } didn't found entity column ${
+                        relationTmp.referencedTable
+                    }.${relatedColumn}.`
+                );
+            }
         }
-        return { ownerColumn, relatedColumn };
+        return { ownerColumns, relatedColumns };
     }
 
     private getRelatedEntities(

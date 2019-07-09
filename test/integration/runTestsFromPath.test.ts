@@ -71,9 +71,6 @@ function runTestForMultipleDrivers(testName: string, dbDrivers: string[], testPa
                 case '144':
                     dbModel = await dataCollectionPhase(driver, Object.assign(connectionOptions, { databaseName: 'db1,db2' }));
                     break;
-                    case '117':
-                        return;
-                        break;
 
                 default:
                     dbModel = await dataCollectionPhase(driver, connectionOptions);
