@@ -377,9 +377,11 @@ function applyNamingStrategy(
                         relation,
                         model
                     );
+                    console.log(`${column.tsName} ${newName}`);
                     model.forEach(entity2 => {
                         entity2.Columns.forEach(column2 => {
                             column2.relations.forEach(relation2 => {
+                                // TODO: many to many (?)
                                 if (
                                     relation2.relatedTable ===
                                         entity.tsEntityName &&
@@ -390,10 +392,26 @@ function applyNamingStrategy(
                                 if (
                                     relation2.relatedTable ===
                                         entity.tsEntityName &&
+                                    relation2.relatiedFieldName ===
+                                        column.tsName
+                                ) {
+                                    relation2.relatiedFieldName = newName;
+                                }
+                                if (
+                                    relation2.relatedTable ===
+                                        entity.tsEntityName &&
                                     relation2.relatedColumns[0] ===
                                         column.tsName
                                 ) {
                                     relation2.relatedColumns[0] = newName;
+                                }
+                                if (
+                                    relation2.ownerTable ===
+                                        entity.tsEntityName &&
+                                    relation2.relatiedFieldName ===
+                                        column.tsName
+                                ) {
+                                    relation2.relatiedFieldName = newName;
                                 }
                                 if (relation.isOwner) {
                                     entity.Indexes.forEach(ind => {

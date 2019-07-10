@@ -230,18 +230,36 @@ export abstract class AbstractDriver {
             const columnName = this.generateNameWithoutDuplicates(
                 ownerEntity,
                 referencedEntity
-            );
+            ).toLowerCase();
+            const relatedColumnName = this.generateNameWithoutDuplicates(
+                referencedEntity,
+                ownerEntity
+            ).toLowerCase();
 
             const col = new ColumnInfo();
             col.tsName = columnName;
             col.relations.push(referencedRelation);
             ownerRelation.ownerColumns[0] = columnName;
+            ownerRelation.relatiedFieldName = columnName;
+            referencedRelation.relatiedFieldName = relatedColumnName;
 
             const { ownerColumns, relatedColumns } = this.getRelatedColumns(
                 ownerEntity,
                 relationTmp,
                 referencedEntity
             );
+
+            const ownerColumnsToBeRemoved = ownerColumns
+                .filter((v, idx) => v.tsName !== relatedColumnName)
+                .map(v => v.tsName);
+            // const relatedColumnsToBeRemoved = relatedColumns.filter((v,idx)=>idx>0).map(v=>v.tsName)
+            ownerEntity.Columns = ownerEntity.Columns.filter(
+                v => !ownerColumnsToBeRemoved.includes(v.tsName)
+            );
+            // referencedEntity.Columns=referencedEntity.Columns.filter(v=>!relatedColumnsToBeRemoved.includes(v.tsName))
+            // ownerEntity.Columns[0].tsName=columnName;
+            // referencedEntity.Columns[0].tsName=relatedColumnName;
+
             if (!ownerColumns || !relatedColumns) {
                 return;
             }

@@ -1,7 +1,6 @@
 {{#*inline "relationOptions" ~}}
-{{log this}}
-{{tolowerCaseFirst relatedTable}}=>{{tolowerCaseFirst relatedTable}}.{{#if isOwner}}{{toPropertyName ownerColumns}},{ {{> ownerRelationOptions}} }
-{{~else}}{{#each}}{{toPropertyName relatedColumns}}{{/each}}{{#if (or actionOnDelete actionOnUpdate ) }},{ {{> relationOptionCascades}} }{{/if}}{{/if}}
+{{tolowerCaseFirst relatedTable}}=>{{tolowerCaseFirst relatedTable}}.{{#if isOwner}}{{toPropertyName relatiedFieldName}},{ {{> ownerRelationOptions}} }
+{{~else}}{{toPropertyName relatiedFieldName}}{{#if (or actionOnDelete actionOnUpdate ) }},{ {{> relationOptionCascades}} }{{/if}}{{/if}}
 {{~/inline}}
 {{#*inline "ownerRelationOptions" ~}}
 {{#options/primary}}primary:true,{{/options/primary}}{{^options/nullable}} nullable:false,{{/options/nullable}}{{> relationOptionCascades}}
@@ -36,7 +35,7 @@ import {BaseEntity,Column,Entity,Index,JoinColumn,JoinTable,ManyToMany,ManyToOne
     {{printPropertyVisibility}}{{toPropertyName tsName}}:{{tsType}}{{#options/nullable}} | null{{/options/nullable}};
         {{/relations}}{{#relations}}
     @{{relationType}}(type=>{{toEntityName relatedTable}},{{> relationOptions options=../options}}){{#isOwner}}
-    {{#if isManyToMany}}@JoinTable({ name:'{{ ../options/name}}'}){{else}}@JoinColumn([{{#each relatedColumns}}{ name:'{{.}}'},{{/each}}]){{/if}}{{/isOwner}}
+    {{#if isManyToMany}}@JoinTable({ name:'{{ ../options/name}}'}){{else}}@JoinColumn([{{#each relatedColumns}}{ name:'{{.}}', referencedColumnName: '{{.}}'},{{/each}}]){{/if}}{{/isOwner}}
     {{#if (or isOneToMany isManyToMany)}}{{printPropertyVisibility}}{{toPropertyName ../tsName}}:{{toLazy (concat  (toEntityName relatedTable) "[]")}};
     {{else}}{{printPropertyVisibility}}{{toPropertyName ../tsName}}:{{toLazy (concat (toEntityName relatedTable) ' | null')}};
     {{/if}}

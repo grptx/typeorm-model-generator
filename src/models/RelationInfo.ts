@@ -19,6 +19,7 @@ export class RelationInfo {
         | "DEFAULT"
         | null;
     public relationIdField: boolean = false;
+    public relatiedFieldName: string;
 
     get isOneToMany(): boolean {
         return this.relationType === "OneToMany";
