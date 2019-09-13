@@ -13,6 +13,8 @@ Supported db engines:
 * Oracle Database
 * SQLite
 
+### Fork features
+* simple support for postgres view generation
 
 ## Installation
 ### Global module
